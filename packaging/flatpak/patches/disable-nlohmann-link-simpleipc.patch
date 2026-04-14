@@ -1,0 +1,8 @@
+--- a/simple-ipc/CMakeLists.txt
++++ b/simple-ipc/CMakeLists.txt
+@@ -17,2 +17,3 @@
+-target_include_directories(simpleipc PUBLIC include/)
+-target_link_libraries(simpleipc Threads::Threads nlohmann_json)
++target_include_directories(simpleipc PUBLIC include/)
++target_link_libraries(simpleipc Threads::Threads)
++# Header-only JSON: no linking required

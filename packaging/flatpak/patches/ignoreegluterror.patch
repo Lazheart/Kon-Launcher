@@ -1,0 +1,10 @@
+diff --git a/game-window/src/window_eglut.cpp b/game-window/src/window_eglut.cpp
+index 1111111..22220002 100644
+--- a/game-window/src/window_eglut.cpp
++++ b/game-window/src/window_eglut.cpp
+@@ -4,1 +4,1 @@
+-
++ #include <iostream>
+@@ -398,1 +398,1 @@
+-        GameWindowManager::getManager()->getErrorHandler()->onError("EGLUT Unknown Key", "Please check your Keyboard Layout. No Fallback Implemented");
++        std::cerr << "EGLUT Unknown Key: Please check your Keyboard Layout. No Fallback Implemented" << std::endl;

@@ -1,0 +1,271 @@
+id: org.lazheart.kon-launcher
+runtime: org.kde.Platform
+runtime-version: "5.15-23.08"
+sdk: org.kde.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm15
+command: minecraft-launcher-gui
+base: io.qt.qtwebengine.BaseApp
+base-version: "5.15-23.08"
+
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=x11
+  - --filesystem=xdg-documents
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=all
+  - --device=dri
+  - --filesystem=home
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.a11y.Bus
+  - --socket=session-bus
+
+  # 🧩 Evitar errores de GTK / Qt y asegurar compatibilidad gráfica
+  # - --env=GTK_MODULES=                  # Evita warnings de canberra-gtk-module ausente
+  # - --env=QT_QPA_PLATFORM=wayland;xcb   # Usa Wayland si está disponible, X11 si no
+  - --env=QTWEBENGINE_CHROMIUM_FLAGS=--no-sandbox
+  # - --env=QT_SCALE_FACTOR=1             # Previene escalado extraño en algunos entornos
+
+  
+  # 🔧 Solucionar problemas de accesibilidad y teclado correctamente
+  - --filesystem=xdg-run/at-spi        # Permite acceso al directorio de accesibilidad
+  - --env=SDL_VIDEO_X11_WMCLASS=minecraft-launcher  # Identifica la ventana correctamente
+  # AT_SPI_BUS_ADDRESS se configura automáticamente por el sistema
+  
+  #  Configuración de teclado para la ventana del juego
+  - --env=LC_ALL=C.UTF-8               # Configuración de locale estándar
+  - --env=LANG=C.UTF-8                 # Idioma por defecto
+  - --env=KEYBOARD_LAYOUT=us           # Layout de teclado por defecto
+  
+  # #  Variables específicas para el juego (ventana secundaria)
+  # - --env=SDL_VIDEO_X11_WMCLASS=Minecraft  # Identifica la ventana del juego
+  # - --env=SDL_VIDEO_X11_WMNAME=Minecraft   # Nombre de la ventana del juego
+  # - --env=SDL_VIDEO_WAYLAND_WMCLASS=Minecraft  # Para Wayland también
+
+build-options:
+  cflags: -O2
+  cxxflags: -O2
+  append-path: /usr/lib/sdk/llvm15/bin
+  env:
+    LDFLAGS: "-L/app/lib"
+    CPPFLAGS: "-I/app/include"
+    CMAKE_PREFIX_PATH: "/app:/usr/lib/sdk/qt5/lib/cmake:/usr/lib/sdk/qt5/lib/cmake/Qt5"
+    PKG_CONFIG_PATH: "/app/lib/pkgconfig:/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig"
+    CC: "clang"
+    CXX: "clang++"
+
+modules:
+  #  Librerías base requeridas
+  - name: libzip
+    buildsystem: cmake
+    builddir: true
+    make-args: [ -j4 ]
+    sources:
+      - type: archive
+        url: https://github.com/nih-at/libzip/archive/refs/tags/v1.10.1.tar.gz
+        sha256: d56d857d1c3ad4a7f3a4c01a51c6a6e5530e35ab93503f62276e8ba2b306186a
+
+  - name: openssl
+    buildsystem: simple
+    build-commands:
+      - ./config --prefix=/app --openssldir=/app/ssl --libdir=lib
+      - make -j4
+      - make install_sw
+      - mkdir -p /app/lib/pkgconfig
+      - echo "prefix=/app" > /app/lib/pkgconfig/openssl.pc
+      - echo "exec_prefix=\${prefix}" >> /app/lib/pkgconfig/openssl.pc
+      - echo "libdir=\${exec_prefix}/lib" >> /app/lib/pkgconfig/openssl.pc
+      - echo "includedir=\${prefix}/include" >> /app/lib/pkgconfig/openssl.pc
+      - echo "Name: OpenSSL" >> /app/lib/pkgconfig/openssl.pc
+      - echo "Description: OpenSSL cryptography and SSL/TLS toolkit" >> /app/lib/pkgconfig/openssl.pc
+      - echo "Version: 3.2.0" >> /app/lib/pkgconfig/openssl.pc
+      - echo "Libs: -L\${libdir} -lssl -lcrypto" >> /app/lib/pkgconfig/openssl.pc
+      - echo "Cflags: -I\${includedir}" >> /app/lib/pkgconfig/openssl.pc
+    sources:
+      - type: archive
+        url: https://www.openssl.org/source/openssl-3.2.0.tar.gz
+        sha256: 14c826f07c7e433706fb5c69fa9e25dab95684844b4c962a2cf1bf183eb4690e
+
+  - name: curl
+    buildsystem: autotools
+    config-opts:
+      - --with-openssl=/app
+      - --without-gnutls
+      - --without-nss
+      - --disable-ldap
+      - --disable-ldaps
+      - --enable-ipv6
+    build-options:
+      env:
+        PKG_CONFIG_PATH: "/app/lib/pkgconfig"
+        LDFLAGS: "-L/app/lib -Wl,-rpath,/app/lib"  # 👈 fuerza a usar /app/lib en tiempo de ejecución
+        CPPFLAGS: "-I/app/include"
+        LIBS: "-lssl -lcrypto"
+        LD_LIBRARY_PATH: "/app/lib"                # 👈 garantiza detección correcta durante build
+        OPENSSL_ROOT_DIR: "/app"
+        OPENSSL_LIB_DIR: "/app/lib"
+        OPENSSL_INCLUDE_DIR: "/app/include"
+    sources:
+      - type: archive
+        url: https://curl.se/download/curl-8.10.1.tar.gz
+        sha256: d15ebab765d793e2e96db090f0e172d127859d78ca6f6391d7eafecfd894bbc0
+
+  
+  - name: abseil-cpp
+    buildsystem: cmake
+    builddir: true
+    config-opts:
+      - -DCMAKE_CXX_STANDARD=17
+      - -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+      - -DCMAKE_BUILD_TYPE=Release
+    sources:
+      - type: archive
+        url: https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz
+        sha256: f50e5ac311a81382da7fa75b97310e4b9006474f9560ac46f54a9967f07d4ae3
+
+  - name: protobuf
+    buildsystem: cmake   
+    builddir: true
+    build-options:
+      env:
+        CXXFLAGS: "-std=c++17"
+        CFLAGS: "-fPIC"
+    config-opts:
+      - -DCMAKE_CXX_STANDARD=17
+      - -Dprotobuf_BUILD_TESTS=OFF
+      - -Dprotobuf_ABSL_PROVIDER=package
+      - -Dprotobuf_UTF8_RANGE_PROVIDER=module
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+      - -DCMAKE_PREFIX_PATH=/app/lib/cmake
+      - -Wno-dev
+      - -DBUILD_DEPS=ON
+    make-args:
+      - -j4
+    sources:
+      - type: archive
+        url: https://github.com/protocolbuffers/protobuf/archive/refs/tags/v28.2.tar.gz
+        sha256: b2340aa47faf7ef10a0328190319d3f3bee1b24f426d4ce8f4253b6f27ce16db
+
+  - name: libevdev
+    buildsystem: meson
+    builddir: true
+    config-opts:
+      - -Dtests=disabled
+    sources:
+      - type: archive
+        url: https://www.freedesktop.org/software/libevdev/libevdev-1.13.1.tar.xz
+        sha256: 06a77bf2ac5c993305882bc1641017f5bec1592d6d1b64787bad492ab34f2f36
+
+  - name: alsa-lib
+    buildsystem: autotools
+    sources:
+      - type: archive
+        url: https://www.alsa-project.org/files/pub/lib/alsa-lib-1.2.11.tar.bz2
+        sha256: 9f3f2f69b995f9ad37359072fbc69a3a88bfba081fc83e9be30e14662795bb4d
+
+  - name: libxtst
+    buildsystem: autotools
+    sources:
+      - type: archive
+        url: https://www.x.org/releases/individual/lib/libXtst-1.2.5.tar.gz
+        sha256: 244ba6e1c5ffa44f1ba251affdfa984d55d99c94bb925a342657e5e7aaf6d39c
+
+  - name: nlohmann-json
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/include/nlohmann
+      - install -Dm644 json.hpp /app/include/nlohmann/json.hpp
+    sources:
+      - type: file
+        url: https://github.com/nlohmann/json/releases/download/v3.7.3/json.hpp
+        sha256: 3b5d2b8f8282b80557091514d8ab97e27f9574336c804ee666fda673a9b59926
+
+  # Modulos del launcher
+
+  - name: mcpelauncher-extract
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+    build-commands:
+      - git submodule update --init --recursive
+    sources:
+      - type: git
+        url: https://github.com/minecraft-linux/mcpelauncher-extract.git
+        branch: ng
+
+  - name: mcpelauncher-client
+    buildsystem: cmake
+    builddir: true
+    make-args: [ -j4 ]
+    build-options:
+      env:
+        PATH: "/usr/lib/sdk/llvm15/bin:/app/bin:/usr/bin"
+        CC: "clang"
+        CXX: "clang++"
+    sources:
+      - type: git
+        url: https://github.com/minecraft-linux/mcpelauncher-manifest.git
+        branch: ng
+      - type: patch
+        path: patches/disable-json-fetch.patch
+      - type: patch
+        path: patches/disable-curl-download.patch
+      - type: patch
+        path: patches/disable-nlohmann-link-simpleipc.patch
+      - type: patch
+        path: patches/remove-nlohmann-link-telemetry.patch
+      - type: patch
+        path: patches/ignoreegluterror.patch
+    build-commands:
+      - git submodule update --init --recursive
+      - echo "# disabled in flatpak, using system json.hpp" > ext/json.cmake
+      - cmake -B build -S /run/build/mcpelauncher-client
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+          -DENABLE_DEV_PATHS=OFF \
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+          -DCMAKE_INSTALL_PREFIX=/app \
+          -DCMAKE_PREFIX_PATH="/app:/usr/lib/sdk/qt5/lib/cmake:/usr/lib/sdk/qt5/lib/cmake/Qt5" \
+          -DCMAKE_INCLUDE_PATH=/app/include \
+          -DCMAKE_LIBRARY_PATH=/app/lib \
+          -DUSE_SYSTEM_CURL=ON \
+          -DCURL_INCLUDE_DIR=/app/include \
+          -DCURL_LIBRARY=/app/lib/libcurl.so \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++
+      - make -C build -j4
+      - DESTDIR=/app make -C build install
+ 
+  - name: mcpelauncher-ui
+    buildsystem: cmake
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DCMAKE_PREFIX_PATH=/usr/lib/sdk/qt5/lib/cmake
+    build-options:
+      env:
+        PATH: /usr/lib/sdk/qt5/bin:/app/bin:/usr/bin
+      prepend-pkg-config-path: /usr/lib/sdk/qt5/lib/pkgconfig
+    sources:
+      - type: git
+        url: https://github.com/Lazheart/UI-Kon-Launcher
+        branch: main
+
+  - name: kon-launcher-metadata
+    buildsystem: simple
+    sources:
+      - type: file
+        path: org.lazheart.kon-launcher.desktop
+      - type: file
+        path: org.lazheart.kon-launcher.metainfo.xml
+      - type: file
+        path: org.lazheart.kon-launcher.svg
+      - type: dir
+        path: screenshoots
+    build-commands:
+      - install -Dm644 org.lazheart.kon-launcher.desktop /app/share/applications/org.lazheart.kon-launcher.desktop
+      - install -Dm644 org.lazheart.kon-launcher.metainfo.xml /app/share/metainfo/org.lazheart.kon-launcher.metainfo.xml
+      - install -Dm644 org.lazheart.kon-launcher.svg /app/share/icons/hicolor/scalable/apps/org.lazheart.kon-launcher.svg

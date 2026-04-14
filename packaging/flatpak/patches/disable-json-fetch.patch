@@ -1,0 +1,12 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1111111..2222222 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -102,7 +102,6 @@
+     include(ext/curl.cmake)
+ endif()
+ 
+-include(ext/json.cmake)
+ 
+ option(USE_GAMECONTROLLERDB "Downloads gamecontrollerdb.txt from gabomdq/SDL_GameControllerDB" ON)
+ if (USE_GAMECONTROLLERDB AND BUILD_CLIENT)

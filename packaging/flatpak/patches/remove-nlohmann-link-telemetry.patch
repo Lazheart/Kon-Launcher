@@ -1,0 +1,6 @@
+--- a/cll-telemetry/CMakeLists.txt
++++ b/cll-telemetry/CMakeLists.txt
+@@ -14,1 +14,2 @@
+-target_link_libraries(cll-telemetry nlohmann_json logger Threads::Threads ${CURL_LIBRARIES} ${ZLIB_LIBRARIES})
++target_link_libraries(cll-telemetry logger Threads::Threads ${CURL_LIBRARIES} ${ZLIB_LIBRARIES})
++# Removed nlohmann_json (header-only)

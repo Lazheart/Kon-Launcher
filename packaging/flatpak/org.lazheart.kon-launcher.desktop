@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Kon Launcher
+Comment=Lanzador no oficial de Minecraftpara Linux
+Exec=minecraft-launcher-gui
+Icon=org.lazheart.kon-launcher
+Terminal=false
+Categories=Game;Utility;
+StartupNotify=true
+Keywords=Minecraft;Bedrock;Launcher;Linux;

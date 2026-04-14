@@ -1,0 +1,24 @@
+# Directorios de build de flatpak-builder
+/build-dir/
+build/
+/app/
+/var/
+/files/
+/repo/
+/.flatpak-builder/
+
+# Archivos temporales
+*.log
+*.tmp
+*.bak
+*~
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de entorno/editor
+.vscode/
+.idea/
+*.swp
