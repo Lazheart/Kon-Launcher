@@ -1,23 +1,67 @@
 #!/bin/bash
 # Script principal para construir el AppImage de Kon-Launcher
-set -e
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="${SCRIPT_DIR}/sources"
+BINARY_DIR="${SCRIPT_DIR}/binaries"
+OUTPUT_DIR="${SCRIPT_DIR}/output"
+
+UI_SOURCE_DIR="${SOURCE_DIR}/UI-Kon-Launcher"
+UI_BUILD_DIR="${BINARY_DIR}/UI-Kon-Launcher-build"
+APPDIR_PATH="${BINARY_DIR}/AppDir"
+LINUXDEPLOY_BIN="${BINARY_DIR}/linuxdeploy"
+
+mkdir -p "${SOURCE_DIR}" "${BINARY_DIR}" "${OUTPUT_DIR}"
 
 # 1. Configurar entorno de desarrollo
-source "$(dirname "$0")/scripts/dev-env.sh"
+source "${SCRIPT_DIR}/scripts/dev-env.sh"
 # 2. Instalar dependencias necesarias
-source "$(dirname "$0")/scripts/build-deps.sh"
+source "${SCRIPT_DIR}/scripts/build-deps.sh"
 # 3. Descargar fuentes necesarias
-source "$(dirname "$0")/scripts/fetch-sources.sh"
-# 4. Construir el AppImage
-echo "Construyendo el AppImage..."
-cd "$(dirname "$0")/.."
-echo "Compilando UI..."
-cd UI-Kon-Launcher
-#Usando las flags correspondientes para generar un binario compatible con AppImage
+source "${SCRIPT_DIR}/scripts/fetch-sources.sh"
 
-# Usar Linux deploy para generar el AppDir
-echo "Lanzando linuxdeploy para generar el AppDir..."
-linuxdeploy --appdir=AppDir --output=appimage
-# 5. Mover el AppImage generado a la carpeta de salida
-mv Kon-Launcher*.AppImage output/
-echo "AppImage generado exitosamente en output/"
+# 4. Construir la UI con flags para binario portable
+if [[ ! -d "${UI_SOURCE_DIR}" ]]; then
+	echo "Error: no se encontro el source de UI en ${UI_SOURCE_DIR}" >&2
+	exit 1
+fi
+
+echo "Construyendo la UI desde ${UI_SOURCE_DIR}..."
+export CFLAGS="${CFLAGS:-} -O2 -fPIC"
+export CXXFLAGS="${CXXFLAGS:-} -O2 -fPIC"
+
+cmake -S "${UI_SOURCE_DIR}" -B "${UI_BUILD_DIR}" \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=/usr
+cmake --build "${UI_BUILD_DIR}" -- -j"$(nproc)"
+
+rm -rf "${APPDIR_PATH}"
+DESTDIR="${APPDIR_PATH}" cmake --install "${UI_BUILD_DIR}"
+
+# Copiar metadata usada por linuxdeploy
+mkdir -p "${APPDIR_PATH}/usr/share/applications" "${APPDIR_PATH}/usr/share/icons/hicolor/scalable/apps"
+cp "${SCRIPT_DIR}/kon-launcher.desktop" "${APPDIR_PATH}/usr/share/applications/kon-launcher.desktop"
+if [[ -f "${SCRIPT_DIR}/kon-launcher.svg" ]]; then
+	cp "${SCRIPT_DIR}/kon-launcher.svg" "${APPDIR_PATH}/usr/share/icons/hicolor/scalable/apps/kon-launcher.svg"
+fi
+
+# 5. Generar el AppImage
+echo "Lanzando linuxdeploy para generar el AppImage..."
+pushd "${SCRIPT_DIR}" >/dev/null
+"${LINUXDEPLOY_BIN}" --appdir="${APPDIR_PATH}" --output=appimage
+
+# 6. Mover AppImage generado a output/
+shopt -s nullglob
+generated_appimages=( *.AppImage )
+if (( ${#generated_appimages[@]} == 0 )); then
+	echo "Error: no se genero ningun AppImage." >&2
+	popd >/dev/null
+	exit 1
+fi
+mv "${generated_appimages[@]}" "${OUTPUT_DIR}/"
+shopt -u nullglob
+popd >/dev/null
+
+echo "AppImage generado exitosamente en ${OUTPUT_DIR}"
