@@ -2,19 +2,19 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APPIMAGE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-SOURCE_DIR="${APPIMAGE_DIR}/sources"
+FETCH_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FETCH_APPIMAGE_DIR="$(cd "${FETCH_SCRIPT_DIR}/.." && pwd)"
+FETCH_SOURCE_DIR="${FETCH_APPIMAGE_DIR}/sources"
 
 echo "Descargando fuentes necesarias para construir el AppImage"
-mkdir -p "${SOURCE_DIR}"
-echo "Clonando en: ${SOURCE_DIR}"
+mkdir -p "${FETCH_SOURCE_DIR}"
+echo "Clonando en: ${FETCH_SOURCE_DIR}"
 
 clone_repo() {
 	local repo_url="$1"
 	local repo_name="$2"
 	local repo_branch="${3:-}"
-	local destination="${SOURCE_DIR}/${repo_name}"
+	local destination="${FETCH_SOURCE_DIR}/${repo_name}"
 
 	if [[ -d "${destination}/.git" ]]; then
 		echo "${repo_name} ya existe en ${destination}. Se omite clonacion."

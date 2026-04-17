@@ -1,12 +1,14 @@
 #!/bin/bash
 
-set -u
+set -euo pipefail
 
 MAX_RETRIES=3
 RETRY_DELAY=5
 
 check_network() {
-    # Verifica resolucion DNS hacia mirrors comunes de Ubuntu.
+    # Verifica resolucion DNS hacia mirrors comunes de Debian/Ubuntu.
+    getent hosts deb.debian.org >/dev/null 2>&1 || \
+    getent hosts security.debian.org >/dev/null 2>&1 || \
     getent hosts archive.ubuntu.com >/dev/null 2>&1 || \
     getent hosts security.ubuntu.com >/dev/null 2>&1
 }
@@ -18,9 +20,10 @@ run_with_retry() {
     while (( attempt <= MAX_RETRIES )); do
         if "$@"; then
             return 0
+        else
+            exit_code=$?
         fi
 
-        exit_code=$?
         echo "Intento ${attempt}/${MAX_RETRIES} fallido (codigo ${exit_code}): $*"
 
         if ! check_network; then
@@ -63,7 +66,6 @@ fi
 # Qt5 (UI)
 echo "Instalando dependencias necesarias para la UI (Qt5)..."
 if ! apt_install \
-    qt5-default \
     qtbase5-dev qtdeclarative5-dev \
     qttools5-dev qttools5-dev-tools \
     qtwebengine5-dev \

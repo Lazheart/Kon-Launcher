@@ -60,7 +60,15 @@ if (( ${#generated_appimages[@]} == 0 )); then
 	popd >/dev/null
 	exit 1
 fi
-mv "${generated_appimages[@]}" "${OUTPUT_DIR}/"
+
+if (( ${#generated_appimages[@]} == 1 )); then
+	mv "${generated_appimages[0]}" "${OUTPUT_DIR}/Kon-Launcher.AppImage"
+	echo "AppImage renombrado a ${OUTPUT_DIR}/Kon-Launcher.AppImage"
+else
+	echo "Se generaron multiples AppImage; se conservan nombres originales."
+	mv "${generated_appimages[@]}" "${OUTPUT_DIR}/"
+fi
+
 shopt -u nullglob
 popd >/dev/null
 
