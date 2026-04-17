@@ -94,12 +94,8 @@ cmake --build "${UI_BUILD_DIR}" -- -j"${CPU_COUNT}"
 
 DESTDIR="${APPDIR_PATH}" cmake --install "${UI_BUILD_DIR}"
 
-# Copiar metadata usada por linuxdeploy
+# A partir de aqui solo se usa metadata instalada en AppDir por los proyectos
 mkdir -p "${APPDIR_PATH}/usr/share/applications" "${APPDIR_PATH}/usr/share/icons/hicolor/scalable/apps"
-cp "${SCRIPT_DIR}/kon-launcher.desktop" "${APPDIR_PATH}/usr/share/applications/kon-launcher.desktop"
-if [[ -f "${SCRIPT_DIR}/kon-launcher.svg" ]]; then
-	cp "${SCRIPT_DIR}/kon-launcher.svg" "${APPDIR_PATH}/usr/share/icons/hicolor/scalable/apps/kon-launcher.svg"
-fi
 
 # 8. Generar el AppImage
 echo "Lanzando linuxdeploy para generar el AppImage..."
@@ -128,22 +124,28 @@ DESKTOP_FILE_PATH="${APPDIR_PATH}/usr/share/applications/org.lazheart.minecraft-
 if [[ ! -f "${DESKTOP_FILE_PATH}" ]]; then
 	DESKTOP_FILE_PATH="${APPDIR_PATH}/usr/share/applications/kon-launcher.desktop"
 fi
+if [[ ! -f "${DESKTOP_FILE_PATH}" ]]; then
+	DESKTOP_FILE_PATH="${SCRIPT_DIR}/kon-launcher.desktop"
+fi
 
 ICON_FILE_PATH="${APPDIR_PATH}/usr/share/icons/hicolor/scalable/apps/org.lazheart.minecraft-launcher.svg"
 if [[ ! -f "${ICON_FILE_PATH}" ]]; then
 	ICON_FILE_PATH="${APPDIR_PATH}/usr/share/icons/hicolor/scalable/apps/kon-launcher.svg"
 fi
+if [[ ! -f "${ICON_FILE_PATH}" ]]; then
+	ICON_FILE_PATH="${SCRIPT_DIR}/kon-launcher.svg"
+fi
 
 EXECUTABLE_PATH="${APPDIR_PATH}/usr/bin/minecraft-launcher-gui"
 
 if [[ ! -f "${DESKTOP_FILE_PATH}" ]]; then
-	echo "Error: no se encontro desktop file en AppDir." >&2
+	echo "Error: no se encontro desktop file (buscado en AppDir y en ${SCRIPT_DIR}/kon-launcher.desktop)." >&2
 	popd >/dev/null
 	exit 1
 fi
 
 if [[ ! -f "${ICON_FILE_PATH}" ]]; then
-	echo "Error: no se encontro icono en AppDir." >&2
+	echo "Error: no se encontro icono (buscado en AppDir y en ${SCRIPT_DIR}/kon-launcher.svg)." >&2
 	popd >/dev/null
 	exit 1
 fi
