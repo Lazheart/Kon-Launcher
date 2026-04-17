@@ -21,28 +21,12 @@ finish-args:
   - --talk-name=org.freedesktop.Notifications
   - --talk-name=org.a11y.Bus
   - --socket=session-bus
-
-  # 🧩 Evitar errores de GTK / Qt y asegurar compatibilidad gráfica
-  # - --env=GTK_MODULES=                  # Evita warnings de canberra-gtk-module ausente
-  # - --env=QT_QPA_PLATFORM=wayland;xcb   # Usa Wayland si está disponible, X11 si no
   - --env=QTWEBENGINE_CHROMIUM_FLAGS=--no-sandbox
-  # - --env=QT_SCALE_FACTOR=1             # Previene escalado extraño en algunos entornos
-
-  
-  # 🔧 Solucionar problemas de accesibilidad y teclado correctamente
-  - --filesystem=xdg-run/at-spi        # Permite acceso al directorio de accesibilidad
-  - --env=SDL_VIDEO_X11_WMCLASS=minecraft-launcher  # Identifica la ventana correctamente
-  # AT_SPI_BUS_ADDRESS se configura automáticamente por el sistema
-  
-  #  Configuración de teclado para la ventana del juego
-  - --env=LC_ALL=C.UTF-8               # Configuración de locale estándar
-  - --env=LANG=C.UTF-8                 # Idioma por defecto
-  - --env=KEYBOARD_LAYOUT=us           # Layout de teclado por defecto
-  
-  # #  Variables específicas para el juego (ventana secundaria)
-  # - --env=SDL_VIDEO_X11_WMCLASS=Minecraft  # Identifica la ventana del juego
-  # - --env=SDL_VIDEO_X11_WMNAME=Minecraft   # Nombre de la ventana del juego
-  # - --env=SDL_VIDEO_WAYLAND_WMCLASS=Minecraft  # Para Wayland también
+  - --filesystem=xdg-run/at-spi        
+  - --env=SDL_VIDEO_X11_WMCLASS=minecraft-launcher 
+  - --env=LC_ALL=C.UTF-8               
+  - --env=LANG=C.UTF-8                 
+  - --env=KEYBOARD_LAYOUT=us           
 
 build-options:
   cflags: -O2
@@ -100,10 +84,10 @@ modules:
     build-options:
       env:
         PKG_CONFIG_PATH: "/app/lib/pkgconfig"
-        LDFLAGS: "-L/app/lib -Wl,-rpath,/app/lib"  # 👈 fuerza a usar /app/lib en tiempo de ejecución
+        LDFLAGS: "-L/app/lib -Wl,-rpath,/app/lib"  
         CPPFLAGS: "-I/app/include"
         LIBS: "-lssl -lcrypto"
-        LD_LIBRARY_PATH: "/app/lib"                # 👈 garantiza detección correcta durante build
+        LD_LIBRARY_PATH: "/app/lib"                
         OPENSSL_ROOT_DIR: "/app"
         OPENSSL_LIB_DIR: "/app/lib"
         OPENSSL_INCLUDE_DIR: "/app/include"
