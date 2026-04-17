@@ -57,7 +57,7 @@ fi
 
 # Base toolchain
 if ! apt_install \
-    build-essential cmake git wget pkg-config \
+    build-essential cmake git wget pkg-config clang\
     ca-certificates; then
     echo "Error: fallo al instalar dependencias base."
     exit 1
