@@ -157,12 +157,12 @@ if [[ ! -x "${EXECUTABLE_PATH}" ]]; then
 fi
 
 ARCH="${APPIMAGE_ARCH}" "${LINUXDEPLOY_BIN}" \
-	--appdir="${APPDIR_PATH}" \
-	--desktop-file="${DESKTOP_FILE_PATH}" \
-	--icon-file="${ICON_FILE_PATH}" \
-	--executable="${EXECUTABLE_PATH}" \
-	 --plugin qt \ 
-	--output=appimage
+    --appdir="${APPDIR_PATH}" \
+    --desktop-file="${DESKTOP_FILE_PATH}" \
+    --icon-file="${ICON_FILE_PATH}" \
+    --executable="${EXECUTABLE_PATH}" \
+    --plugin qt \
+    --output=appimage
 
 # 9. Mover AppImage generado a output/
 shopt -s nullglob
