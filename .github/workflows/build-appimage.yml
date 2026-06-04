@@ -1,0 +1,40 @@
+name: Build AppImage
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: |
+          chmod +x packaging/appimage/build.sh
+          chmod +x packaging/appimage/scripts/*.sh
+
+      - name: Build AppImage
+        run: |
+          cd packaging/appimage
+          ./build.sh
+
+      - name: Verify AppImage was generated
+        run: |
+          ls -lah packaging/appimage/output
+          test -f packaging/appimage/output/Kon-Launcher.AppImage
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kon-Launcher-AppImage
+          path: packaging/appimage/output/Kon-Launcher.AppImage
+          if-no-files-found: error
