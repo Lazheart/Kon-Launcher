@@ -161,6 +161,7 @@ ARCH="${APPIMAGE_ARCH}" "${LINUXDEPLOY_BIN}" \
 	--desktop-file="${DESKTOP_FILE_PATH}" \
 	--icon-file="${ICON_FILE_PATH}" \
 	--executable="${EXECUTABLE_PATH}" \
+	 --plugin qt \ 
 	--output=appimage
 
 # 9. Mover AppImage generado a output/
