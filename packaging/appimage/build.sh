@@ -156,6 +156,8 @@ if [[ ! -x "${EXECUTABLE_PATH}" ]]; then
 	exit 1
 fi
 
+export QML_SOURCES_PATHS="${UI_SOURCE_DIR}"
+
 ARCH="${APPIMAGE_ARCH}" "${LINUXDEPLOY_BIN}" \
     --appdir="${APPDIR_PATH}" \
     --desktop-file="${DESKTOP_FILE_PATH}" \
@@ -163,7 +165,6 @@ ARCH="${APPIMAGE_ARCH}" "${LINUXDEPLOY_BIN}" \
     --executable="${EXECUTABLE_PATH}" \
     --plugin qt \
     --output=appimage
-
 # 9. Mover AppImage generado a output/
 shopt -s nullglob
 generated_appimages=( *.AppImage )
